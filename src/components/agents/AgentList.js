@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getAgents, deleteAgent, updateAgent } from '../../services/api';
+import AgentForm from './AgentForm';
 
 const AgentList = () => {
     const [agents, setAgents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [editingAgent, setEditingAgent] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const fetchAgents = async () => {
         try {
@@ -48,6 +49,16 @@ const AgentList = () => {
         }
     };
 
+    const handleAddAgent = async (agentData) => {
+        try {
+            await fetchAgents(); // Refresh the list after adding
+            setIsModalOpen(false);
+            setError('');
+        } catch (err) {
+            setError('Failed to add agent');
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
@@ -61,8 +72,8 @@ const AgentList = () => {
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
                 <button
-                    onClick={() => setEditingAgent({})}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                     Add New Agent
                 </button>
@@ -135,6 +146,20 @@ const AgentList = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Agent Form Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                    <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                        <div className="mt-3">
+                            <AgentForm 
+                                onSubmit={handleAddAgent}
+                                onCancel={() => setIsModalOpen(false)}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
