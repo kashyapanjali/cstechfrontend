@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { auth } from '../../services/api';
 
 const Login = () => {
     const [formData, setFormData] = useState({
@@ -13,26 +14,25 @@ const Login = () => {
     const { login } = useAuth();
 
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setLoading(true);
+        setError('');
 
         try {
-            const result = await login(formData);
-            if (result.success) {
-                navigate('/dashboard');
-            } else {
-                setError(result.message);
-            }
+            const response = await auth.login(formData);
+            const { token, user } = response.data;
+            login(token, user);
+            navigate('/dashboard');
         } catch (err) {
-            setError('An error occurred during login');
+            setError(err.response?.data?.message || 'Failed to login');
         } finally {
             setLoading(false);
         }
@@ -48,8 +48,8 @@ const Login = () => {
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     {error && (
-                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                            <span className="block sm:inline">{error}</span>
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                            {error}
                         </div>
                     )}
                     <div className="rounded-md shadow-sm -space-y-px">
@@ -60,10 +60,10 @@ const Login = () => {
                                 name="email"
                                 type="email"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Email address"
                                 value={formData.email}
                                 onChange={handleChange}
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                placeholder="Email address"
                             />
                         </div>
                         <div>
@@ -73,10 +73,10 @@ const Login = () => {
                                 name="password"
                                 type="password"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Password"
                                 value={formData.password}
                                 onChange={handleChange}
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                placeholder="Password"
                             />
                         </div>
                     </div>

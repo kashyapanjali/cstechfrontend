@@ -1,16 +1,18 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_TIMEOUT = parseInt(process.env.REACT_APP_API_TIMEOUT) || 30000;
 
-// Create axios instance
+// Create axios instance with default config
 const api = axios.create({
     baseURL: API_URL,
+    timeout: API_TIMEOUT,
     headers: {
-        'Content-Type': 'application/json'
-    }
+        'Content-Type': 'application/json',
+    },
 });
 
-// Add token to requests
+// Request interceptor for adding auth token
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -24,26 +26,56 @@ api.interceptors.request.use(
     }
 );
 
-// Auth APIs
-export const login = (credentials) => api.post('/auth/login', credentials);
-
-// Agent APIs
-export const getAgents = () => api.get('/agents');
-export const createAgent = (agentData) => api.post('/agents', agentData);
-export const updateAgent = (id, agentData) => api.put(`/agents/${id}`, agentData);
-export const deleteAgent = (id) => api.delete(`/agents/${id}`);
-
-// List APIs
-export const uploadList = (formData) => {
-    const config = {
-        headers: {
-            'Content-Type': 'multipart/form-data'
+// Response interceptor for handling errors
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+        
+        // Handle 401 Unauthorized errors
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+            return Promise.reject(error);
         }
-    };
-    return api.post('/lists/upload', formData, config);
+        
+        return Promise.reject(error);
+    }
+);
+
+// API endpoints
+export const auth = {
+    login: (credentials) => api.post('/auth/login', credentials),
+    logout: () => api.post('/auth/logout'),
 };
 
-export const getListsByAgent = (agentId) => api.get(`/lists/agent/${agentId}`);
-export const updateListStatus = (id, status) => api.put(`/lists/${id}/status`, { status });
+export const agents = {
+    getAll: () => api.get('/agents'),
+    getById: (id) => api.get(`/agents/${id}`),
+    create: (data) => api.post('/agents', data),
+    update: (id, data) => api.put(`/agents/${id}`, data),
+    delete: (id) => api.delete(`/agents/${id}`),
+    updateStatus: (id, status) => api.patch(`/agents/${id}/status`, { status }),
+};
+
+export const lists = {
+    getAll: () => api.get('/lists'),
+    getByAgent: (agentId) => api.get(`/lists/agent/${agentId}`),
+    create: (data) => api.post('/lists', data),
+    update: (id, data) => api.put(`/lists/${id}`, data),
+    delete: (id) => api.delete(`/lists/${id}`),
+    updateStatus: (id, status) => api.patch(`/lists/${id}/status`, { status }),
+    upload: (formData) => api.post('/lists/upload', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    }),
+};
+
+export const dashboard = {
+    getStats: () => api.get('/dashboard/stats'),
+    getRecentActivity: () => api.get('/dashboard/activity'),
+};
 
 export default api;

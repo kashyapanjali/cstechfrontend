@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { getAgents, deleteAgent, updateAgent } from '../../services/api';
+import { agents } from '../../services/api';
 import AgentForm from './AgentForm';
 
 const AgentList = () => {
-    const [agents, setAgents] = useState([]);
+    const [agentsList, setAgents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const fetchAgents = async () => {
         try {
-            const response = await getAgents();
+            const response = await agents.getAll();
             setAgents(response.data.data);
             setError('');
         } catch (err) {
@@ -27,8 +27,8 @@ const AgentList = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this agent?')) {
             try {
-                await deleteAgent(id);
-                setAgents(agents.filter(agent => agent._id !== id));
+                await agents.delete(id);
+                setAgents(agentsList.filter(agent => agent._id !== id));
                 setError('');
             } catch (err) {
                 setError('Failed to delete agent');
@@ -39,8 +39,8 @@ const AgentList = () => {
     const handleStatusChange = async (id, currentStatus) => {
         try {
             const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-            await updateAgent(id, { status: newStatus });
-            setAgents(agents.map(agent => 
+            await agents.updateStatus(id, newStatus);
+            setAgents(agentsList.map(agent => 
                 agent._id === id ? { ...agent, status: newStatus } : agent
             ));
             setError('');
@@ -107,7 +107,7 @@ const AgentList = () => {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {agents.map((agent) => (
+                        {agentsList.map((agent) => (
                             <tr key={agent._id}>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="text-sm font-medium text-gray-900">{agent.name}</div>
