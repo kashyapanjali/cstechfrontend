@@ -28,7 +28,6 @@ export const AuthProvider = ({ children }) => {
         try {
             await auth.logout();
         } catch (error) {
-            console.error('Logout error:', error);
         } finally {
             localStorage.removeItem('token');
             localStorage.removeItem('user');

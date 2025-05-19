@@ -10,21 +10,25 @@ const ListView = () => {
 
     useEffect(() => {
         const fetchLists = async () => {
-            if (!user?._id) return;
-            
             try {
-                const response = await lists.getByAgent(user._id);
-                setListData(response.data.data);
+                setLoading(true);
+                const response = await lists.getAll();
+                if (response.data && response.data.success) {
+                    setListData(response.data.data || []);
+                } else {
+                    setListData([]);
+                }
                 setError('');
             } catch (err) {
-                setError('Failed to fetch lists');
+                console.error('Error fetching lists:', err);
+                setError(err.message || 'Failed to fetch lists');
             } finally {
                 setLoading(false);
             }
         };
 
         fetchLists();
-    }, [user]);
+    }, []);
 
     const handleStatusChange = async (id, currentStatus) => {
         try {
@@ -35,7 +39,7 @@ const ListView = () => {
             ));
             setError('');
         } catch (err) {
-            setError('Failed to update list status');
+            setError(err.message || 'Failed to update list status');
         }
     };
 
@@ -60,53 +64,65 @@ const ListView = () => {
             )}
 
             <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                List Name
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Total Contacts
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {listData.map((list) => (
-                            <tr key={list._id}>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm font-medium text-gray-900">{list.name}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-gray-500">{list.totalContacts}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                        list.status === 'completed' 
-                                            ? 'bg-green-100 text-green-800' 
-                                            : 'bg-yellow-100 text-yellow-800'
-                                    }`}>
-                                        {list.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button
-                                        onClick={() => handleStatusChange(list._id, list.status)}
-                                        className="text-indigo-600 hover:text-indigo-900"
-                                    >
-                                        {list.status === 'completed' ? 'Mark as Pending' : 'Mark as Completed'}
-                                    </button>
-                                </td>
+                {listData.length === 0 ? (
+                    <div className="text-center py-8">
+                        <p className="text-gray-500">No lists found</p>
+                    </div>
+                ) : (
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    First Name
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Phone
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Notes
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {listData.map((list) => (
+                                <tr key={list._id}>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm font-medium text-gray-900">{list.firstName}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-500">{list.phone}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-500">{list.notes}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                            list.status === 'completed' 
+                                                ? 'bg-green-100 text-green-800' 
+                                                : 'bg-yellow-100 text-yellow-800'
+                                        }`}>
+                                            {list.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button
+                                            onClick={() => handleStatusChange(list._id, list.status)}
+                                            className="text-indigo-600 hover:text-indigo-900"
+                                        >
+                                            {list.status === 'completed' ? 'Mark as Pending' : 'Mark as Completed'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
             </div>
         </div>
     );

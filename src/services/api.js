@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+// API Configuration
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 const API_TIMEOUT = parseInt(process.env.REACT_APP_API_TIMEOUT) || 30000;
 
@@ -65,7 +66,7 @@ export const lists = {
     create: (data) => api.post('/lists', data),
     update: (id, data) => api.put(`/lists/${id}`, data),
     delete: (id) => api.delete(`/lists/${id}`),
-    updateStatus: (id, status) => api.patch(`/lists/${id}/status`, { status }),
+    updateStatus: (id, status) => api.put(`/lists/${id}/status`, { status }),
     upload: (formData) => api.post('/lists/upload', formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
